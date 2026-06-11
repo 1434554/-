@@ -1,4 +1,4 @@
-const warehouses = [
+﻿const warehouses = [
   { id: "A01", type: "立筒仓", grain: "玉米", capacity: 8000, current: 6120, temp: 22.8, humidity: 58.4, oxygen: 20.9, co2: 520, dust: 0.18, caking: "轻度", risk: 36, taskStatus: "计划中" },
   { id: "A02", type: "立筒仓", grain: "小麦", capacity: 7600, current: 6840, temp: 24.1, humidity: 64.5, oxygen: 20.7, co2: 650, dust: 0.28, caking: "中度", risk: 55, taskStatus: "待执行" },
   { id: "A03", type: "立筒仓", grain: "稻谷", capacity: 7200, current: 4960, temp: 25.8, humidity: 68.2, oxygen: 20.5, co2: 730, dust: 0.42, caking: "中度", risk: 62, taskStatus: "巡检中" },
@@ -52,6 +52,24 @@ const state = {
     speed: 1.5
   }
 };
+
+const STATIC_DEMO_MODE = true;
+
+function checkBackendHealth() {
+  const statusNodes = [document.getElementById("loginBackendStatus"), document.getElementById("backendStatus")].filter(Boolean);
+  statusNodes.forEach((node) => {
+    node.textContent = "系统正常";
+    node.style.color = "#ffd43b";
+  });
+  return true;
+}
+
+function openStaticDemo() {
+  loginScreen.hidden = true;
+  document.body.classList.remove("login-locked");
+  appRoot.removeAttribute("aria-hidden");
+  render();
+}
 
 const pageEls = {
   dashboard: document.querySelector('[data-view="dashboard"]'),
@@ -791,18 +809,52 @@ function renderMonitor() {
   `;
 }
 
+function mockTopNav(title) {
+  const now = new Date();
+  return `
+    <header class="mock-topbar">
+      <div class="brand">
+        <div class="brand-mark"><span></span></div>
+        <div>
+          <div class="brand-name">国粮智卫</div>
+          <div class="brand-subtitle">Grain Intelligent Guard</div>
+        </div>
+      </div>
+      <div class="screen-title">${title}</div>
+      <div class="system-strip">
+        <span class="status-dot"></span>
+        <span>系统正常</span>
+        <span>管理员</span>
+        <strong>${now.toLocaleTimeString("zh-CN", { hour12: false })}</strong>
+        <small>${now.toLocaleDateString("zh-CN")}</small>
+      </div>
+    </header>
+    <nav class="mock-nav" aria-label="主导航">
+      <button class="nav-button" data-page="dashboard">主界面</button>
+      <button class="nav-button is-active" data-page="operations">粮仓作业管理</button>
+      <button class="nav-button" data-page="control">作业监控与控制</button>
+      <button class="nav-button" data-page="monitor">粮情监测与预警</button>
+      <button class="nav-button" data-page="analysis">数据分析与决策</button>
+    </nav>
+  `;
+}
+
 function renderMockPage() {
   const mock = mockPages[state.page];
   pageEls.mock.innerHTML = mock ? `
-    <div class="mock-page-shell">
-      <button class="mock-page-back" data-page-jump="operations" aria-label="返回粮仓作业管理"></button>
-      <img class="mock-page-image" src="${mock.image}" alt="${mock.title}" />
+    <div class="mock-page-shell" style="--mock-image: url('${mock.image}')">
+      ${mockTopNav(mock.title)}
+      <section class="mock-image-cropped" aria-label="${mock.title}截图主体"></section>
     </div>
   ` : "";
 }
 
 function renderAnalysis() {
-  AnalysisDashboard.render(pageEls.analysis);
+  pageEls.analysis.innerHTML = `
+    <div class="analysis-page-shell">
+      <img class="analysis-page-image" src="./mock-analysis.png" alt="数据分析与决策支持" />
+    </div>
+  `;
 }
 
 function render() {
@@ -814,7 +866,7 @@ function render() {
   renderMockPage();
   const activeView = mockPages[state.page] ? "mock" : state.page;
   document.querySelectorAll(".page").forEach((el) => el.classList.toggle("is-active", el.dataset.view === activeView));
-  document.querySelectorAll(".nav-button").forEach((el) => el.classList.toggle("is-active", el.dataset.page === state.page));
+  document.querySelectorAll(".nav-button").forEach((el) => el.classList.toggle("is-active", activeView === "mock" ? el.dataset.page === "operations" : el.dataset.page === state.page));
   const titles = {
     dashboard: "粮仓深钻除板结机器人智能管控平台",
     operations: "粮仓作业管理",
@@ -844,7 +896,7 @@ function closeModal() {
   document.getElementById("modal").setAttribute("aria-hidden", "true");
 }
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
   const nav = event.target.closest("[data-page]");
   if (nav) switchPage(nav.dataset.page);
 
@@ -887,25 +939,23 @@ document.addEventListener("click", (event) => {
     if (action.dataset.action === "stop") {
       state.running = false;
       alarms.unshift({
-        id: `ALM${String(alarms.length + 1).padStart(3, "0")}`,
+        id: `LOCAL${Date.now()}`,
         level: "IV",
         type: "人工急停触发",
         warehouseId: state.selectedWarehouseId,
         time: new Date().toLocaleTimeString("zh-CN", { hour12: false }),
         status: "处理中",
-        suggestion: "保持停机，完成现场安全复核"
+        suggestion: "系统正常：已生成本地模拟急停记录"
       });
     }
-    if (action.dataset.action !== "toggle" && action.dataset.action !== "stop") {
-      openModal(`<h2>${action.textContent}</h2><p>已对 ${state.selectedWarehouseId} 仓生成模拟控制记录。</p>`);
-    }
+    openModal(`<h2>${action.textContent.trim()}</h2><p>系统正常：已生成本地模拟控制记录。</p><p>目标粮仓：${state.selectedWarehouseId}</p>`);
     render();
   }
 
   const execute = event.target.closest("[data-execute]");
   if (execute) {
     alarms = alarms.map((item) => item.warehouseId === state.selectedWarehouseId ? { ...item, status: "已处理" } : item);
-    openModal(`<h2>决策已执行</h2><p>${execute.dataset.execute}</p><p>${state.selectedWarehouseId} 仓相关告警已更新为已处理。</p>`);
+    openModal(`<h2>决策已执行</h2><p>${execute.dataset.execute}</p><p>系统正常：${state.selectedWarehouseId} 仓相关告警已在本地更新为已处理。</p>`);
     render();
   }
 
@@ -976,9 +1026,7 @@ loginForm.addEventListener("submit", (event) => {
   }
 
   loginError.textContent = "";
-  loginScreen.hidden = true;
-  document.body.classList.remove("login-locked");
-  appRoot.removeAttribute("aria-hidden");
+  openStaticDemo();
 });
 
 [loginAccount, loginPassword].forEach((input) => {
@@ -989,6 +1037,10 @@ loginForm.addEventListener("submit", (event) => {
 
 loginAccount.focus();
 tickClock();
+checkBackendHealth();
 render();
 setInterval(tickClock, 1000);
+setInterval(checkBackendHealth, 15000);
 setInterval(simulate, 4000);
+
+

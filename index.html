@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>国粮智卫</title>
     <link rel="stylesheet" href="./app.css" />
-    <link rel="stylesheet" href="./analysis.css" />
   </head>
   <body class="login-locked">
     <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
@@ -17,7 +16,7 @@
             <div class="brand-subtitle">Grain Intelligent Guard</div>
           </div>
         </div>
-        <div class="login-system-status"><span class="status-dot"></span>智能管控平台</div>
+        <div class="login-system-status"><span class="status-dot"></span><span id="loginBackendStatus">正在检测后端...</span></div>
       </div>
 
       <div class="login-stage">
@@ -56,7 +55,7 @@
         <div class="screen-title" id="screenTitle">粮仓深钻除板结机器人智能管控平台</div>
         <div class="system-strip">
           <span class="status-dot"></span>
-          <span>系统正常</span>
+          <span id="backendStatus">正在检测后端...</span>
           <span>管理员</span>
           <strong id="clock">09:42:36</strong>
           <small id="dateText">2024-05-20 星期一</small>
@@ -86,8 +85,6 @@
       </div>
     </div>
 
-    <script src="./vendor/echarts.min.js"></script>
-    <script src="./analysis.js"></script>
     <script src="./app.js"></script>
   </body>
 </html>
