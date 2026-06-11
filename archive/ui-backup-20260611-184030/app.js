@@ -802,7 +802,11 @@ function renderMockPage() {
 }
 
 function renderAnalysis() {
-  AnalysisDashboard.render(pageEls.analysis);
+  pageEls.analysis.innerHTML = `
+    <div class="analysis-page-shell">
+      <img class="analysis-page-image" src="./mock-analysis.png" alt="数据分析与决策支持" />
+    </div>
+  `;
 }
 
 function render() {
